@@ -44,6 +44,15 @@ var audio_stream_playback: AudioStreamGeneratorPlayback
 var is_streaming_vapi_audio: bool = false
 var is_vapi_recording: bool = false
 
+# UI state nodes
+@onready var item_open: Node = $"item/open"
+@onready var item_closed: Node = $"item/closed"
+
+# Audio feedback
+var phone_ringing_player: AudioStreamPlayer
+var phone_unavailable_player: AudioStreamPlayer
+var is_t_button_disabled: bool = false
+
 # Audio capture for real-time streaming
 var audio_capture_bus_index: int
 var audio_input: AudioEffectCapture
@@ -59,6 +68,9 @@ func _ready():
 	
 	# Initialize VAPI components
 	setup_vapi_components()
+	
+	# Set initial UI state (not calling)
+	update_call_ui()
 
 
 func _input(event):
@@ -77,9 +89,11 @@ func _input(event):
 	
 	# Toggle VAPI recording with T key
 	if Input.is_action_just_pressed("ui_accept") and Input.is_key_pressed(KEY_T):
-		toggle_vapi_recording()
+		if not is_t_button_disabled:
+			toggle_vapi_recording()
 	elif event is InputEventKey and event.pressed and event.keycode == KEY_T:
-		toggle_vapi_recording()
+		if not is_t_button_disabled:
+			toggle_vapi_recording()
 
 
 func _physics_process(delta: float) -> void:
@@ -92,7 +106,7 @@ func _physics_process(delta: float) -> void:
 	var moving_sideways = abs(input_dir.x) > 0.0
 
 	# Correct running condition: only run when moving forward
-	var is_running = Input.is_action_pressed("run") and current_stamina > 0 and moving_forward
+	var is_running = Input.is_action_pressed("run") and current_stamina > 0 and not moving_forward #does the opposite idk but it works dont touch
 	var current_speed = RUN_SPEED if is_running else WALK_SPEED
 
 	# Apply movement multipliers only if not moving forward
@@ -183,7 +197,7 @@ func setup_vapi_components():
 	# Add capture effect to Record bus
 	audio_input = AudioEffectCapture.new()
 	AudioServer.add_bus_effect(audio_capture_bus_index, audio_input)
-	AudioServer.set_bus_volume_db(audio_capture_bus_index, 0)
+	AudioServer.set_bus_volume_db(audio_capture_bus_index, 3.5)  # Boost input by 50% (~3.5dB)
 	
 	# Setup microphone input to Record bus
 	var microphone_player = AudioStreamPlayer.new()
@@ -211,7 +225,31 @@ func setup_vapi_components():
 	vapi_audio_player.stream = audio_stream_generator
 	vapi_audio_player.volume_db = 0.0
 	
+	# Setup phone audio feedback
+	setup_phone_audio()
+	
 	print("VAPI components initialized with microphone capture")
+
+
+func setup_phone_audio():
+	"""Setup audio players for phone feedback sounds"""
+	# Phone ringing audio player
+	phone_ringing_player = AudioStreamPlayer.new()
+	add_child(phone_ringing_player)
+	var ringing_audio = load("res://assets/phone-ringing.mp3")  # Assuming .mp3 format
+	if ringing_audio:
+		phone_ringing_player.stream = ringing_audio
+	phone_ringing_player.volume_db = -5.0  # Slightly quieter
+	
+	# Phone unavailable audio player
+	phone_unavailable_player = AudioStreamPlayer.new()
+	add_child(phone_unavailable_player)
+	var unavailable_audio = load("res://assets/unavailable-phone.mp3")  # Assuming .mp3 format
+	if unavailable_audio:
+		phone_unavailable_player.stream = unavailable_audio
+	phone_unavailable_player.volume_db = -3.0
+	
+	print("Phone audio feedback initialized")
 
 
 func toggle_vapi_recording():
@@ -230,17 +268,30 @@ func start_vapi_recording():
 		is_vapi_recording = true
 		audio_input.clear_buffer()
 		print("Started VAPI recording...")
+		update_call_ui()  # Update UI to show calling state
+		
+		# Play phone ringing sound while connecting
+		if phone_ringing_player and phone_ringing_player.stream:
+			phone_ringing_player.play()
+			print("Playing phone ringing sound...")
+		
 		call_vapi_api()
 
 
 func stop_vapi_recording():
 	if is_vapi_recording:
 		is_vapi_recording = false
+		
+		# Stop phone ringing if it's playing
+		if phone_ringing_player and phone_ringing_player.playing:
+			phone_ringing_player.stop()
+		
 		if is_websocket_connected:
 			send_control_message({"type": "hangup"})
 			websocket.close()
 			is_websocket_connected = false
 		stop_vapi_audio_stream()
+		update_call_ui()  # Update UI to show not calling state
 		print("Stopped VAPI recording")
 
 
@@ -366,13 +417,41 @@ func handle_control_message(json_text: String):
 			"call-started":
 				print("Call started")
 			"call-ended":
-				print("Call ended")
-				stop_vapi_recording()
+				print("Call ended by AI")
+				handle_ai_hangup()
 			_:
 				print("Unknown message type: ", message["type"])
 
 
+func handle_ai_hangup():
+	"""Handle when AI hangs up - play unavailable sound and disable T button temporarily"""
+	print("AI hung up - playing unavailable sound")
+	
+	# Stop the call
+	stop_vapi_recording()
+	
+	# Disable T button
+	is_t_button_disabled = true
+	
+	# Play unavailable phone sound
+	if phone_unavailable_player and phone_unavailable_player.stream:
+		phone_unavailable_player.play()
+		
+		# Re-enable T button after the unavailable sound finishes
+		await phone_unavailable_player.finished
+		await get_tree().create_timer(0.5).timeout  # Small delay after sound
+		
+		is_t_button_disabled = false
+		update_call_ui()  # Ensure UI shows closed state
+		print("T button re-enabled")
+
+
 func handle_incoming_audio(audio_data: PackedByteArray):
+	# Stop phone ringing when AI starts talking
+	if phone_ringing_player and phone_ringing_player.playing:
+		phone_ringing_player.stop()
+		print("AI responded - stopped ringing")
+	
 	if not is_streaming_vapi_audio:
 		start_vapi_audio_stream()
 	push_audio_to_continuous_stream(audio_data)
@@ -410,3 +489,15 @@ func stop_vapi_audio_stream():
 		is_streaming_vapi_audio = false
 		audio_stream_playback = null
 		print("Stopped Vapi audio stream")
+
+func update_call_ui():
+	"""Update UI visibility based on call state"""
+	if item_open and item_closed:
+		if is_vapi_recording:
+			# During call: show open, hide closed
+			item_open.visible = true
+			item_closed.visible = false
+		else:
+			# Not calling: show closed, hide open
+			item_open.visible = false
+			item_closed.visible = true

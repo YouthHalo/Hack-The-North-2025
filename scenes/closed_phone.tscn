@@ -3,6 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://e5nvxl5ubdu0" path="res://assets/psx_style_flip_phone.glb" id="1_37nce"]
 
 [node name="Sketchfab_Scene" instance=ExtResource("1_37nce")]
+transform = Transform3D(0.75, 0, 0, 0, 0.75, 0, 0, 0, 0.75, 0, 0, 0)
 
 [node name="Top" parent="Sketchfab_model/Flip Phone_fbx/RootNode" index="0"]
 transform = Transform3D(0.0246237, 0, 0, 0, 0.169595, 0, 0, 0, 0.164069, 0, 0, 0)

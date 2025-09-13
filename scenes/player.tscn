@@ -22,7 +22,7 @@ far = 30.0
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
 
 [node name="item" type="Node3D" parent="."]
-transform = Transform3D(0.965926, 0, -0.258819, 0, 1, 0, 0.258819, 0, 0.965926, 1.83757, 0, -3.27379)
+transform = Transform3D(0.965926, 0, -0.258819, 0, 1, 0, 0.258819, 0, 0.965926, 1.23757, 0, -1.67379)
 
 [node name="closed" parent="item" instance=ExtResource("3_dqkch")]
 transform = Transform3D(-0.481739, 0, -0.876316, 0, 1, 0, 0.876316, 0, -0.481739, -0.32453, 0.218369, 0.0290461)
