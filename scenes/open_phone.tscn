@@ -18,3 +18,7 @@ visible = false
 [node name="Bottom_001" parent="Sketchfab_model/Flip Phone_fbx/RootNode" index="3"]
 transform = Transform3D(-0.035791, 0, 0, 0, -0.035791, 0, 0, 0, -0.035791, -10.4507, 10.0005, -57.0128)
 visible = false
+
+[node name="SpotLight3D" type="OmniLight3D" parent="." index="1"]
+transform = Transform3D(-5.28213e-08, 0.563491, -1.20841, 2.4631e-08, 1.20841, 0.563491, 1.33333, 2.36848e-15, -5.82819e-08, 0.227586, 0.392663, 0)
+light_energy = 0.192

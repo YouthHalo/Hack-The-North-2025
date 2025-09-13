@@ -197,8 +197,8 @@ func setup_vapi_components():
 	# Add capture effect to Record bus
 	audio_input = AudioEffectCapture.new()
 	AudioServer.add_bus_effect(audio_capture_bus_index, audio_input)
-	AudioServer.set_bus_volume_db(audio_capture_bus_index, 3.5)  # Boost input by 50% (~3.5dB)
-	
+	AudioServer.set_bus_volume_db(audio_capture_bus_index, 0) #deadass the 2nd value feels like it does nothing but it works 
+
 	# Setup microphone input to Record bus
 	var microphone_player = AudioStreamPlayer.new()
 	microphone_player.bus = "Record"
@@ -250,6 +250,34 @@ func setup_phone_audio():
 	phone_unavailable_player.volume_db = -3.0
 	
 	print("Phone audio feedback initialized")
+
+
+func handle_connection_lost():
+	"""Handle when WebSocket connection is lost unexpectedly"""
+	print("Connection lost - playing unavailable sound and ending call")
+	
+	# Stop any ongoing audio
+	if phone_ringing_player and phone_ringing_player.playing:
+		phone_ringing_player.stop()
+	
+	# Stop the call recording
+	if is_vapi_recording:
+		is_vapi_recording = false
+	
+	stop_vapi_audio_stream()
+	
+	# Play unavailable phone sound for 2 seconds
+	if phone_unavailable_player and phone_unavailable_player.stream:
+		phone_unavailable_player.play()
+		
+		# Wait for 2 seconds, then stop the audio
+		await get_tree().create_timer(1.3).timeout
+		phone_unavailable_player.stop()
+		await get_tree().create_timer(0.5).timeout  # Small delay after sound
+	
+	# Switch phone call mode to off
+	update_call_ui()  # This will show the closed state
+	print("Call mode switched to off due to connection loss")
 
 
 func toggle_vapi_recording():
@@ -307,7 +335,8 @@ func handle_vapi_updates():
 		print("WebSocket connected successfully!")
 	elif state == WebSocketPeer.STATE_CLOSED and is_websocket_connected:
 		is_websocket_connected = false
-		print("WebSocket connection closed")
+		print("WebSocket connection closed unexpectedly")
+		handle_connection_lost()
 	
 	# Incoming messages
 	if is_websocket_connected:
@@ -433,12 +462,13 @@ func handle_ai_hangup():
 	# Disable T button
 	is_t_button_disabled = true
 	
-	# Play unavailable phone sound
+	# Play unavailable phone sound for 2 seconds
 	if phone_unavailable_player and phone_unavailable_player.stream:
 		phone_unavailable_player.play()
 		
-		# Re-enable T button after the unavailable sound finishes
-		await phone_unavailable_player.finished
+		# Wait for 2 seconds, then stop the audio
+		await get_tree().create_timer(2.0).timeout
+		phone_unavailable_player.stop()
 		await get_tree().create_timer(0.5).timeout  # Small delay after sound
 		
 		is_t_button_disabled = false
