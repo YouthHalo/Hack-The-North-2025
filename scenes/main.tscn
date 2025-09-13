@@ -1,6 +1,10 @@
-[gd_scene load_steps=6 format=3 uid="uid://it6stqjvxf85"]
+[gd_scene load_steps=8 format=3 uid="uid://it6stqjvxf85"]
 
+[ext_resource type="PackedScene" uid="uid://b2w2qc40qa3xt" path="res://assets/church.glb" id="1_0wfyh"]
 [ext_resource type="PackedScene" uid="uid://bkcwetp2msewl" path="res://scenes/player.tscn" id="1_o5qli"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0wfyh"]
+size = Vector3(5.63831, 1.45215, 3.67633)
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_o5qli"]
 sky_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
@@ -23,19 +27,29 @@ albedo_color = Color(0.180392, 0.301961, 0, 1)
 
 [node name="Main" type="Node3D"]
 
+[node name="Church" parent="." instance=ExtResource("1_0wfyh")]
+transform = Transform3D(-4.37114e-07, 0, -10, 0, 10, 0, 10, 0, -4.37114e-07, 0, 10, -37.7676)
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Church"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Church/StaticBody3D"]
+transform = Transform3D(1, 0, -3.55271e-15, 0, 1, 0, 3.55271e-15, 0, 1, -1.68952, -0.269149, 0.0432794)
+shape = SubResource("BoxShape3D_0wfyh")
+
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
-light_energy = 0.05
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0.0933151, 0, 0.0843277)
+light_energy = 0.3
+light_volumetric_fog_energy = 0.1
 shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_sugp2")
 
 [node name="Player" parent="." instance=ExtResource("1_o5qli")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.83184, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.93184, 0)
 
 [node name="CSGBox3D" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.604, 0, -31.932)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.0363, 0, -1.46695)
 use_collision = true
-size = Vector3(56.1722, 0.2, 85.6346)
+size = Vector3(191.108, 0.2, 321.167)
 material = SubResource("StandardMaterial3D_o5qli")

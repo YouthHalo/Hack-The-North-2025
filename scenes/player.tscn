@@ -15,7 +15,6 @@ shape = SubResource("CapsuleShape3D_u8vuu")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-far = 30.0
 
 [node name="Ingame UI" parent="Camera3D" instance=ExtResource("2_g2els")]
 
