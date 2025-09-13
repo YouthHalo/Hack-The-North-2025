@@ -1,7 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://bkcwetp2msewl"]
+[gd_scene load_steps=6 format=3 uid="uid://bkcwetp2msewl"]
 
 [ext_resource type="Script" uid="uid://bg6hd347d0uj3" path="res://scripts/player.gd" id="1_3vyb7"]
 [ext_resource type="PackedScene" uid="uid://i3ooq4xfujo1" path="res://scenes/ingame_ui.tscn" id="2_g2els"]
+[ext_resource type="PackedScene" uid="uid://bvvg505e56x5j" path="res://scenes/closed_phone.tscn" id="3_dqkch"]
+[ext_resource type="PackedScene" uid="uid://dqjcmekm33121" path="res://scenes/open_phone.tscn" id="3_qhqgy"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_u8vuu"]
 
@@ -18,3 +20,13 @@ far = 30.0
 [node name="Ingame UI" parent="Camera3D" instance=ExtResource("2_g2els")]
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+
+[node name="item" type="Node3D" parent="."]
+transform = Transform3D(0.965926, 0, -0.258819, 0, 1, 0, 0.258819, 0, 0.965926, 1.83757, 0, -3.27379)
+
+[node name="closed" parent="item" instance=ExtResource("3_dqkch")]
+transform = Transform3D(-0.481739, 0, -0.876316, 0, 1, 0, 0.876316, 0, -0.481739, -0.32453, 0.218369, 0.0290461)
+
+[node name="open" parent="item" instance=ExtResource("3_qhqgy")]
+transform = Transform3D(-0.5, 0, -0.866025, 0, 1, 0, 0.866025, 0, -0.5, -0.3, 0, 0)
+visible = false

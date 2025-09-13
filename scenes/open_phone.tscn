@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3 uid="uid://dqjcmekm33121"]
+
+[ext_resource type="PackedScene" uid="uid://e5nvxl5ubdu0" path="res://assets/psx_style_flip_phone.glb" id="1_d66cu"]
+
+[node name="Sketchfab_Scene" instance=ExtResource("1_d66cu")]
+
+[node name="Top" parent="Sketchfab_model/Flip Phone_fbx/RootNode" index="0"]
+transform = Transform3D(-0.023497, -0.0507157, 0, 0.0073635, -0.161834, 0, 0, 0, 0.164069, 4.2574, 22.3961, -4.11853e-07)
+
+[node name="Bottom" parent="Sketchfab_model/Flip Phone_fbx/RootNode" index="1"]
+transform = Transform3D(-0.035791, 0, 0, 0, -0.035791, 0, 0, 0, -0.035791, 4.2574, 22.3961, -1.69753e-06)
+
+[node name="Top_001" parent="Sketchfab_model/Flip Phone_fbx/RootNode" index="2"]
+transform = Transform3D(0.0246237, 0, 0, 0, 0.169595, 0, 0, 0, 0.164069, -10.4507, 10.0005, -57.0128)
+visible = false
+
+[node name="Bottom_001" parent="Sketchfab_model/Flip Phone_fbx/RootNode" index="3"]
+transform = Transform3D(-0.035791, 0, 0, 0, -0.035791, 0, 0, 0, -0.035791, -10.4507, 10.0005, -57.0128)
+visible = false
