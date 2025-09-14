@@ -75,6 +75,9 @@ var has_switched_to_fin: bool = false  # Track if we've switched to fin assistan
 var current_assistant_level: int = 0  # 0 = first, 1 = stall_1, 2 = stall_2
 var movement_disabled: bool = false  # Disable movement when near car after uh oh
 
+# Final sequence
+@onready var black_screen_overlay: ColorRect = $"Ingame UI/ColorRect"
+
 # Audio feedback
 var phone_ringing_player: AudioStreamPlayer
 var phone_unavailable_player: AudioStreamPlayer
@@ -245,6 +248,7 @@ func get_max_stamina() -> float:
 # -----------------------
 # VAPI Voice Integration
 # -----------------------
+
 func setup_vapi_components():
 	# Setup audio capture bus
 	audio_capture_bus_index = AudioServer.get_bus_index("Record")
@@ -878,6 +882,36 @@ func end_calls_and_play_unavailable_phone():
 			print("Playing unavailable phone sound")
 		else:
 			print("Warning: Could not load unavailable-phone.mp3")
+	
+	# Wait a moment for the phone sound to play
+	await get_tree().create_timer(2.0).timeout
+	
+	# Decrease 3D resolution to super low
+	decrease_3d_resolution_dramatically()
+	
+	# Wait a moment then fade to black
+	await get_tree().create_timer(1.0).timeout
+	
+	# Show black screen
+	if black_screen_overlay:
+		black_screen_overlay.visible = true
+		print("Screen turned black")
+	
+	# Wait a moment in black screen
+	await get_tree().create_timer(2.0).timeout
+	
+	# Shut off the game
+	print("Shutting down game...")
+	get_tree().quit()
+
+func decrease_3d_resolution_dramatically():
+	"""Dramatically decrease the 3D resolution"""
+	print("Decreasing 3D resolution dramatically")
+	var viewport = get_viewport()
+	if viewport:
+		# Set to very low resolution scale (0.1 = 10% of original resolution)
+		viewport.scaling_3d_scale = 0.1
+		print("3D resolution set to super low (10%)")
 
 
 # -----------------------
