@@ -48,6 +48,15 @@ var is_vapi_recording: bool = false
 @onready var item_open: Node = $"item/open"
 @onready var item_closed: Node = $"item/closed"
 
+# Subtitle system
+@onready var subtitle_label: RichTextLabel = $"Ingame UI/Subtitles"
+@onready var hint_label: RichTextLabel = $"Ingame UI/Hint"
+var subtitle_timer: float = 0.0
+var subtitle_clear_delay: float = 6.0
+var has_pending_subtitles: bool = false
+var intro_message_complete: bool = false
+var intro_target_text: String = "you gotta do what you gotta do"  # Key phrase to detect intro completion
+
 # Audio feedback
 var phone_ringing_player: AudioStreamPlayer
 var phone_unavailable_player: AudioStreamPlayer
@@ -69,8 +78,11 @@ func _ready():
 	# Initialize VAPI components
 	setup_vapi_components()
 	
-	# Set initial UI state (not calling)
-	update_call_ui()
+	# Set phone always on (show open state)
+	set_phone_always_on()
+	
+	# Start VAPI call immediately
+	start_vapi_recording()
 
 
 func _input(event):
@@ -98,6 +110,7 @@ func _input(event):
 
 func _physics_process(delta: float) -> void:
 	handle_vapi_updates()
+	handle_subtitle_timer(delta)
 	
 	# Get the input direction
 	var input_dir := Input.get_vector("left", "right", "forward", "backward")
@@ -238,7 +251,8 @@ func setup_phone_audio():
 	add_child(phone_ringing_player)
 	var ringing_audio = load("res://assets/phone-ringing.mp3")  # Assuming .mp3 format
 	if ringing_audio:
-		phone_ringing_player.stream = ringing_audio
+		#phone_ringing_player.stream = ringing_audio
+		pass
 	phone_ringing_player.volume_db = -5.0  # Slightly quieter
 	
 	# Phone unavailable audio player
@@ -276,7 +290,7 @@ func handle_connection_lost():
 		await get_tree().create_timer(0.5).timeout  # Small delay after sound
 	
 	# Switch phone call mode to off
-	update_call_ui()  # This will show the closed state
+	update_call_ui()  # Phone always shows open state
 	print("Call mode switched to off due to connection loss")
 
 
@@ -296,7 +310,7 @@ func start_vapi_recording():
 		is_vapi_recording = true
 		audio_input.clear_buffer()
 		print("Started VAPI recording...")
-		update_call_ui()  # Update UI to show calling state
+		update_call_ui()  # Phone always shows open state
 		
 		# Play phone ringing sound while connecting
 		if phone_ringing_player and phone_ringing_player.stream:
@@ -319,7 +333,7 @@ func stop_vapi_recording():
 			websocket.close()
 			is_websocket_connected = false
 		stop_vapi_audio_stream()
-		update_call_ui()  # Update UI to show not calling state
+		update_call_ui()  # Phone always shows open state
 		print("Stopped VAPI recording")
 
 
@@ -343,10 +357,15 @@ func handle_vapi_updates():
 		while websocket.get_available_packet_count() > 0:
 			var packet: PackedByteArray = websocket.get_packet()
 			if packet.size() > 0:
-				var text = packet.get_string_from_utf8()
-				if text.begins_with("{") or text.begins_with("["):
-					handle_control_message(text)
+				# Check if this is likely text data (JSON) by looking at first byte
+				if packet[0] == 123 or packet[0] == 91:  # '{' or '[' ASCII values
+					var text = packet.get_string_from_utf8()
+					if text != "":  # Valid UTF-8 conversion
+						handle_control_message(text)
+					else:
+						print("Failed to parse text message from packet")
 				else:
+					# Treat as binary audio data
 					handle_incoming_audio(packet)
 	
 	# Send mic audio
@@ -426,7 +445,8 @@ func send_realtime_audio_to_websocket():
 		if error != OK:
 			print("Failed to send raw PCM audio: ", error)
 		else:
-			print("Sent ", pcm_data.size(), " bytes of raw PCM data")
+			# print("Sent ", pcm_data.size(), " bytes of raw PCM data")
+			pass
 
 
 func send_control_message(message_obj: Dictionary):
@@ -437,10 +457,12 @@ func send_control_message(message_obj: Dictionary):
 func handle_control_message(json_text: String):
 	var json = JSON.new()
 	if json.parse(json_text) != OK:
-		print("Failed to parse control message")
+		print("Failed to parse control message: ", json_text)
 		return
 	
 	var message = json.data
+	print("Received control message: ", json_text)  # Debug log all control messages
+	
 	if message.has("type"):
 		match message["type"]:
 			"call-started":
@@ -448,8 +470,24 @@ func handle_control_message(json_text: String):
 			"call-ended":
 				print("Call ended by AI")
 				handle_ai_hangup()
+			"transcript":
+				if message.has("role") and message["role"] == "assistant" and message.has("transcript"):
+					add_subtitle(message["transcript"])
+				if message.has("text"):
+					print("Transcript: ", message["text"])
+				if message.has("user") and message["user"].has("text"):
+					print("User said: ", message["user"]["text"])
+				if message.has("assistant") and message["assistant"].has("text"):
+					print("Assistant said: ", message["assistant"]["text"])
+			"conversation-update":
+				print("Conversation update received")
+			"speech-update":
+				if message.has("status"):
+					print("Speech status: ", message["status"])
 			_:
 				print("Unknown message type: ", message["type"])
+	else:
+		print("Message without type field: ", message)
 
 
 func handle_ai_hangup():
@@ -472,7 +510,7 @@ func handle_ai_hangup():
 		await get_tree().create_timer(0.5).timeout  # Small delay after sound
 		
 		is_t_button_disabled = false
-		update_call_ui()  # Ensure UI shows closed state
+		update_call_ui()  # Phone always shows open state
 		print("T button re-enabled")
 
 
@@ -521,13 +559,54 @@ func stop_vapi_audio_stream():
 		print("Stopped Vapi audio stream")
 
 func update_call_ui():
-	"""Update UI visibility based on call state"""
+	"""Phone is always on - always show open state"""
 	if item_open and item_closed:
-		if is_vapi_recording:
-			# During call: show open, hide closed
-			item_open.visible = true
-			item_closed.visible = false
+		# Always show open, hide closed
+		item_open.visible = true
+		item_closed.visible = false
+
+func set_phone_always_on():
+	"""Set phone to always be in the on state"""
+	if item_open and item_closed:
+		item_open.visible = true
+		item_closed.visible = false
+
+func handle_subtitle_timer(delta: float):
+	"""Handle subtitle clearing timer"""
+	if has_pending_subtitles:
+		subtitle_timer += delta
+		if subtitle_timer >= subtitle_clear_delay:
+			clear_subtitles()
+
+func add_subtitle(text: String):
+	"""Add subtitle text to the RichTextLabel"""
+	if subtitle_label:
+		var current_text = subtitle_label.text
+		if current_text == "":
+			subtitle_label.text = text
 		else:
-			# Not calling: show closed, hide open
-			item_open.visible = false
-			item_closed.visible = true
+			subtitle_label.text = current_text + " " + text
+		
+		# Check if intro message is complete
+		if not intro_message_complete and intro_target_text in subtitle_label.text.to_lower():
+			intro_message_complete = true
+			# Add voice prompt to hint label
+			if hint_label:
+				hint_label.text = "Reply with your voice!"
+			print("Intro message complete - added voice prompt")
+		
+		# Reset timer and mark as having pending subtitles
+		subtitle_timer = 0.0
+		has_pending_subtitles = true
+		print("Added subtitle: ", text)
+
+func clear_subtitles():
+	"""Clear all subtitle text"""
+	if subtitle_label:
+		subtitle_label.text = ""
+	if hint_label:
+		hint_label.text = ""
+	has_pending_subtitles = false
+	subtitle_timer = 0.0
+	intro_message_complete = false  # Reset intro flag when clearing
+	print("Cleared subtitles")

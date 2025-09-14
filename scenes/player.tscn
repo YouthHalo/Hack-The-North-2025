@@ -1,7 +1,6 @@
-[gd_scene load_steps=6 format=3 uid="uid://bkcwetp2msewl"]
+[gd_scene load_steps=5 format=3 uid="uid://bkcwetp2msewl"]
 
 [ext_resource type="Script" uid="uid://bg6hd347d0uj3" path="res://scripts/player.gd" id="1_3vyb7"]
-[ext_resource type="PackedScene" uid="uid://i3ooq4xfujo1" path="res://scenes/ingame_ui.tscn" id="2_g2els"]
 [ext_resource type="PackedScene" uid="uid://bvvg505e56x5j" path="res://scenes/closed_phone.tscn" id="3_dqkch"]
 [ext_resource type="PackedScene" uid="uid://dqjcmekm33121" path="res://scenes/open_phone.tscn" id="3_qhqgy"]
 
@@ -16,8 +15,6 @@ shape = SubResource("CapsuleShape3D_u8vuu")
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 
-[node name="Ingame UI" parent="Camera3D" instance=ExtResource("2_g2els")]
-
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
 
 [node name="item" type="Node3D" parent="."]
@@ -29,3 +26,40 @@ transform = Transform3D(-0.481739, 0, -0.876316, 0, 1, 0, 0.876316, 0, -0.481739
 [node name="open" parent="item" instance=ExtResource("3_qhqgy")]
 transform = Transform3D(-0.816152, 0.487163, -0.310753, 0.107217, 0.656121, 0.747, 0.567802, 0.576348, -0.587727, -0.222354, 0, 0.289778)
 visible = false
+
+[node name="Ingame UI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Subtitles" type="RichTextLabel" parent="Ingame UI"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 215.0
+offset_top = -164.0
+offset_right = -213.0
+grow_horizontal = 2
+grow_vertical = 0
+shortcut_keys_enabled = false
+horizontal_alignment = 1
+
+[node name="Hint" type="RichTextLabel" parent="Ingame UI"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 215.0
+offset_top = -47.0
+offset_right = -213.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/default_color = Color(0.752661, 0.752661, 0, 1)
+shortcut_keys_enabled = false
+horizontal_alignment = 1

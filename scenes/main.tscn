@@ -85,14 +85,14 @@ transform = Transform3D(-0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, -0.866025, 2.33584,
 [node name="SpotLight3D" type="SpotLight3D" parent="car"]
 transform = Transform3D(-0.824314, 0, -0.566133, 0, 1, 0, 0.566133, 0, -0.824314, 2.23971, 0.738008, 1.27003)
 spot_range = 3.56485
-spot_attenuation = 2.0
+spot_attenuation = 3.0
 spot_angle = 28.9569
 
 [node name="SpotLight3D2" type="SpotLight3D" parent="car"]
 transform = Transform3D(-0.824314, 0, -0.566133, 0, 1, 0, 0.566133, 0, -0.824314, 1.3529, 0.733598, 2.25084)
 spot_range = 3.56485
-spot_attenuation = 2.0
+spot_attenuation = 3.0
 spot_angle = 28.9569
 
-[node name="Sketchfab_Scene6" parent="." instance=ExtResource("6_tefeu")]
+[node name="ROAD" parent="." instance=ExtResource("6_tefeu")]
 transform = Transform3D(-8.74228e-08, 0, 70, 0, 2, 0, -2, 0, -3.0598e-06, 23.0074, 0.270731, 36.3951)
