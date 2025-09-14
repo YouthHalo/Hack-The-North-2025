@@ -1,0 +1,152 @@
+[gd_scene load_steps=2 format=3 uid="uid://dq5v7mr0ifu5v"]
+
+[ext_resource type="PackedScene" uid="uid://c7dikwsh2j0em" path="res://assets/psx_forest_asset_pack.glb" id="1_avsvi"]
+
+[node name="Sketchfab_Scene" instance=ExtResource("1_avsvi")]
+
+[node name="Circle_0" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="0"]
+visible = false
+
+[node name="Circle_001_1" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="1"]
+visible = false
+
+[node name="Circle_002_2" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="2"]
+visible = false
+
+[node name="Circle_003_3" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="3"]
+visible = false
+
+[node name="Circle_004_4" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="4"]
+visible = false
+
+[node name="PS1Bush_5" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="5"]
+visible = false
+
+[node name="PS1Bush_001_6" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="6"]
+visible = false
+
+[node name="PS1Bush_002_7" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="7"]
+visible = false
+
+[node name="PS1Bush_003_8" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="8"]
+visible = false
+
+[node name="Ps1Bush2Texture_9" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="9"]
+visible = false
+
+[node name="Object_28" parent="Sketchfab_model/root/GLTF_SceneRootNode/Ps1Bush2Texture_003_12" index="0"]
+visible = false
+
+[node name="Object_30" parent="Sketchfab_model/root/GLTF_SceneRootNode/Lily1_13" index="0"]
+visible = false
+
+[node name="Object_32" parent="Sketchfab_model/root/GLTF_SceneRootNode/Lily2_14" index="0"]
+visible = false
+
+[node name="Lily3_15" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="15"]
+visible = false
+
+[node name="Object_34" parent="Sketchfab_model/root/GLTF_SceneRootNode/Lily3_15" index="0"]
+visible = false
+
+[node name="LilyFlower_16" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="16"]
+visible = false
+
+[node name="Object_36" parent="Sketchfab_model/root/GLTF_SceneRootNode/LilyFlower_16" index="0"]
+visible = false
+
+[node name="Rock1_17" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="17"]
+visible = false
+
+[node name="Rock2_18" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="18"]
+visible = false
+
+[node name="Rock3_19" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="19"]
+visible = false
+
+[node name="Rock4_20" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="20"]
+visible = false
+
+[node name="Rock5_21" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="21"]
+visible = false
+
+[node name="Rock6_22" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="22"]
+visible = false
+
+[node name="Trunk_001_28" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="28"]
+visible = false
+
+[node name="Ps1Tree2Texture_29" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="29"]
+visible = false
+
+[node name="Ps1Tree2Texture_001_30" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="30"]
+visible = false
+
+[node name="Ps1Tree2Texture_002_31" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="31"]
+visible = false
+
+[node name="Ps1Tree2Texture_003_32" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="32"]
+visible = false
+
+[node name="Trunk_002_33" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="33"]
+visible = false
+
+[node name="Ps1Tree3Texture_34" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="34"]
+visible = false
+
+[node name="Object_72" parent="Sketchfab_model/root/GLTF_SceneRootNode/Ps1Tree3Texture_34" index="0"]
+visible = false
+
+[node name="Ps1Tree3Texture_001_35" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="35"]
+visible = false
+
+[node name="Ps1Tree3Texture_002_36" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="36"]
+visible = false
+
+[node name="Ps1Tree3Texture_003_37" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="37"]
+visible = false
+
+[node name="Trunk_003_38" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="38"]
+visible = false
+
+[node name="Ps1Tree4Texture_39" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="39"]
+visible = false
+
+[node name="Ps1Tree4Texture_001_40" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="40"]
+visible = false
+
+[node name="Ps1Tree4Texture_002_41" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="41"]
+visible = false
+
+[node name="Ps1Tree4Texture_003_42" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="42"]
+visible = false
+
+[node name="Trunk_004_43" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="43"]
+visible = false
+
+[node name="Ps1Tree5Texture_44" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="44"]
+visible = false
+
+[node name="Ps1Tree5Texture_001_45" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="45"]
+visible = false
+
+[node name="Ps1Tree5Texture_002_46" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="46"]
+visible = false
+
+[node name="Ps1Tree5Texture_003_47" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="47"]
+visible = false
+
+[node name="Trunk_005_48" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="48"]
+visible = false
+
+[node name="Ps1Tree6Texture_49" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="49"]
+visible = false
+
+[node name="Ps1Tree6Texture_001_50" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="50"]
+visible = false
+
+[node name="Ps1Tree6Texture_002_51" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="51"]
+visible = false
+
+[node name="Ps1Tree6Texture_003_52" parent="Sketchfab_model/root/GLTF_SceneRootNode" index="52"]
+visible = false

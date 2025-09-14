@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://it6stqjvxf85"]
+[gd_scene load_steps=17 format=3 uid="uid://it6stqjvxf85"]
 
 [ext_resource type="PackedScene" uid="uid://b2w2qc40qa3xt" path="res://assets/church.glb" id="1_0wfyh"]
 [ext_resource type="PackedScene" uid="uid://bkcwetp2msewl" path="res://scenes/player.tscn" id="1_o5qli"]
@@ -8,6 +8,8 @@
 [ext_resource type="PackedScene" uid="uid://b0dfqar7eyklg" path="res://assets/psx_low-poly_car_-_renault.glb" id="5_tefeu"]
 [ext_resource type="AudioStream" uid="uid://dgq72w4hlnoxs" path="res://assets/caridle.mp3" id="6_o6xl0"]
 [ext_resource type="PackedScene" uid="uid://n7mp571yptuu" path="res://assets/psx_road.glb" id="6_tefeu"]
+[ext_resource type="PackedScene" uid="uid://c3tmfk83tupqs" path="res://assets/low_polyps1_style_street_lamp.glb" id="9_85g3d"]
+[ext_resource type="PackedScene" uid="uid://dq5v7mr0ifu5v" path="res://scenes/tree.tscn" id="10_choun"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_0wfyh"]
 size = Vector3(5.50178, 1.45215, 3.67633)
@@ -152,3 +154,54 @@ max_distance = 20.0
 
 [node name="ROAD" parent="." instance=ExtResource("6_tefeu")]
 transform = Transform3D(-8.74228e-08, 0, 70, 0, 2, 0, -2, 0, -3.0598e-06, 23.0074, 0.270731, 36.3951)
+
+[node name="streetlight" parent="." instance=ExtResource("9_85g3d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.60702, 0.195356, 30.5973)
+
+[node name="streetlight2" parent="streetlight" instance=ExtResource("9_85g3d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0, 0)
+
+[node name="streetlight6" parent="streetlight" instance=ExtResource("9_85g3d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 54, 0, 0)
+
+[node name="streetlight7" parent="streetlight" instance=ExtResource("9_85g3d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 78, 0, 0)
+
+[node name="streetlight8" parent="streetlight" instance=ExtResource("9_85g3d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -77, 0, 0)
+
+[node name="streetlight9" parent="streetlight" instance=ExtResource("9_85g3d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -104, 0, 0)
+
+[node name="streetlight3" parent="streetlight" instance=ExtResource("9_85g3d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0, 0)
+
+[node name="SpotLight3D" type="SpotLight3D" parent="streetlight/streetlight3"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 5.5, 2.7)
+light_energy = 16.0
+spot_range = 4096.0
+spot_angle = 60.0
+
+[node name="streetlight5" parent="streetlight" instance=ExtResource("9_85g3d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0, 0)
+
+[node name="SpotLight3D" type="SpotLight3D" parent="streetlight/streetlight5"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 5.5, 2.7)
+light_energy = 16.0
+spot_range = 4096.0
+spot_angle = 60.0
+
+[node name="streetlight4" parent="streetlight" instance=ExtResource("9_85g3d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48, 0, 0)
+
+[node name="SpotLight3D" type="SpotLight3D" parent="streetlight/streetlight4"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 5.5, 2.7)
+light_energy = 16.0
+spot_range = 4096.0
+spot_angle = 60.0
+
+[node name="Sketchfab_Scene" parent="." instance=ExtResource("10_choun")]
+transform = Transform3D(8, 0, 0, 0, 8, 0, 0, 0, 8, 29.2161, 0.801049, -14.9382)
+
+[node name="Sketchfab_Scene2" parent="." instance=ExtResource("10_choun")]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, -24.7839, 0.801049, -14.9382)
