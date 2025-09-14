@@ -1,10 +1,11 @@
-[gd_scene load_steps=13 format=3 uid="uid://it6stqjvxf85"]
+[gd_scene load_steps=14 format=3 uid="uid://it6stqjvxf85"]
 
 [ext_resource type="PackedScene" uid="uid://b2w2qc40qa3xt" path="res://assets/church.glb" id="1_0wfyh"]
 [ext_resource type="PackedScene" uid="uid://bkcwetp2msewl" path="res://scenes/player.tscn" id="1_o5qli"]
 [ext_resource type="Texture2D" uid="uid://do8gj6flbndst" path="res://assets/grass 17 - 128x128.png" id="3_sugp2"]
 [ext_resource type="PackedScene" uid="uid://bnwbntgann5qu" path="res://assets/low_poly_ps1_tombstone.glb" id="4_tbgi4"]
 [ext_resource type="PackedScene" uid="uid://b0dfqar7eyklg" path="res://assets/psx_low-poly_car_-_renault.glb" id="5_tefeu"]
+[ext_resource type="AudioStream" uid="uid://dgq72w4hlnoxs" path="res://assets/caridle.mp3" id="6_o6xl0"]
 [ext_resource type="PackedScene" uid="uid://n7mp571yptuu" path="res://assets/psx_road.glb" id="6_tefeu"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_0wfyh"]
@@ -93,6 +94,12 @@ transform = Transform3D(-0.824314, 0, -0.566133, 0, 1, 0, 0.566133, 0, -0.824314
 spot_range = 3.56485
 spot_attenuation = 3.0
 spot_angle = 28.9569
+
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="car"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.22853, 1.18426, 1.62603)
+stream = ExtResource("6_o6xl0")
+autoplay = true
+max_distance = 20.0
 
 [node name="ROAD" parent="." instance=ExtResource("6_tefeu")]
 transform = Transform3D(-8.74228e-08, 0, 70, 0, 2, 0, -2, 0, -3.0598e-06, 23.0074, 0.270731, 36.3951)

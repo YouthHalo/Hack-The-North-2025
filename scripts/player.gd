@@ -55,7 +55,17 @@ var subtitle_timer: float = 0.0
 var subtitle_clear_delay: float = 6.0
 var has_pending_subtitles: bool = false
 var intro_message_complete: bool = false
-var intro_target_text: String = "you gotta do what you gotta do"  # Key phrase to detect intro completion
+var intro_target_text: String = "just finish up alright"  # Key phrase to detect intro completion
+var church_cleanup_target_text: String = "go clean up that old church"  # Key phrase to detect church cleanup directive
+var last_transcript_bit: String = ""  # Store the last transcript piece for replacement logic
+
+# Assistant switching system
+var vapi_assistant_id_stall_1 := "5fe51e48-9286-47bb-aa24-dfaa8c1d62a7"
+var vapi_assistant_id_stall_2 := "2716c2b3-905c-477e-9191-ea7b274e9079"
+var user_silence_timer: float = 0.0
+var user_silence_threshold: float = 15.0
+var has_switched_assistant: bool = false
+var current_assistant_level: int = 0  # 0 = first, 1 = stall_1, 2 = stall_2
 
 # Audio feedback
 var phone_ringing_player: AudioStreamPlayer
@@ -111,6 +121,7 @@ func _input(event):
 func _physics_process(delta: float) -> void:
 	handle_vapi_updates()
 	handle_subtitle_timer(delta)
+	handle_user_silence_timer(delta)
 	
 	# Get the input direction
 	var input_dir := Input.get_vector("left", "right", "forward", "backward")
@@ -473,6 +484,8 @@ func handle_control_message(json_text: String):
 			"transcript":
 				if message.has("role") and message["role"] == "assistant" and message.has("transcript"):
 					add_subtitle(message["transcript"])
+				elif message.has("role") and message["role"] == "user" and message.has("transcript"):
+					add_user_message(message["transcript"])
 				if message.has("text"):
 					print("Transcript: ", message["text"])
 				if message.has("user") and message["user"].has("text"):
@@ -481,6 +494,8 @@ func handle_control_message(json_text: String):
 					print("Assistant said: ", message["assistant"]["text"])
 			"conversation-update":
 				print("Conversation update received")
+				# Reset silence timer on conversation updates
+				user_silence_timer = 0.0
 			"speech-update":
 				if message.has("status"):
 					print("Speech status: ", message["status"])
@@ -582,10 +597,44 @@ func add_subtitle(text: String):
 	"""Add subtitle text to the RichTextLabel"""
 	if subtitle_label:
 		var current_text = subtitle_label.text
-		if current_text == "":
+		
+		# Check if the new text is an extension/update of the current text
+		# This handles VAPI's incremental transcript updates
+		if current_text != "" and text.begins_with(current_text):
+			# New text contains current text + more, so just replace entirely
 			subtitle_label.text = text
+			print("Updated subtitle with extended version")
+		elif current_text != "" and current_text.length() > 0:
+			# Check if new text is a partial update that should replace the end
+			var words_current = current_text.split(" ")
+			var words_new = text.split(" ")
+			
+			# Find overlap between end of current and beginning of new
+			var overlap_found = false
+			for i in range(min(words_current.size(), words_new.size())):
+				var current_suffix = " ".join(words_current.slice(words_current.size() - i - 1))
+				var new_prefix = " ".join(words_new.slice(0, i + 1))
+				
+				if current_suffix == new_prefix and i > 0:
+					# Found overlap, replace the overlapping part
+					var keep_part = " ".join(words_current.slice(0, words_current.size() - i - 1))
+					if keep_part == "":
+						subtitle_label.text = text
+					else:
+						subtitle_label.text = keep_part + " " + text
+					overlap_found = true
+					print("Replaced overlapping subtitle portion")
+					break
+			
+			if not overlap_found:
+				# No overlap found, append normally
+				subtitle_label.text = current_text + " " + text
 		else:
-			subtitle_label.text = current_text + " " + text
+			# First subtitle or current text is empty
+			subtitle_label.text = text
+		
+		# Store this transcript bit for future comparisons
+		last_transcript_bit = text
 		
 		# Check if intro message is complete
 		if not intro_message_complete and intro_target_text in subtitle_label.text.to_lower():
@@ -595,10 +644,25 @@ func add_subtitle(text: String):
 				hint_label.text = "Reply with your voice!"
 			print("Intro message complete - added voice prompt")
 		
+		# Check for church cleanup directive
+		if church_cleanup_target_text in subtitle_label.text.to_lower():
+			if hint_label:
+				hint_label.text = "Go to the building"
+			print("Church cleanup directive detected - added building hint")
+		
 		# Reset timer and mark as having pending subtitles
 		subtitle_timer = 0.0
 		has_pending_subtitles = true
 		print("Added subtitle: ", text)
+
+func add_user_message(text: String):
+	"""Add user message to the hint box"""
+	if hint_label:
+		hint_label.text = text
+		print("Added user message: ", text)
+	
+	# Reset user silence timer when user speaks
+	user_silence_timer = 0.0
 
 func clear_subtitles():
 	"""Clear all subtitle text"""
@@ -608,5 +672,41 @@ func clear_subtitles():
 		hint_label.text = ""
 	has_pending_subtitles = false
 	subtitle_timer = 0.0
-	intro_message_complete = false  # Reset intro flag when clearing
+	last_transcript_bit = ""  # Clear the last transcript bit
+	# Don't reset intro_message_complete - we want to keep tracking user silence
 	print("Cleared subtitles")
+
+func handle_user_silence_timer(delta: float):
+	"""Handle switching assistant after user silence"""
+	# Apply timer for first assistant (level 0) and stall_1 (level 1)
+	if is_vapi_recording and intro_message_complete and current_assistant_level < 2:
+		user_silence_timer += delta
+		print("Silence timer: ", user_silence_timer, " / ", user_silence_threshold, " (Assistant level: ", current_assistant_level, ")")
+		if user_silence_timer >= user_silence_threshold:
+			switch_to_next_assistant()
+
+func switch_to_next_assistant():
+	"""Switch to the next assistant after user silence"""
+	if current_assistant_level >= 2:
+		return  # Already at max level
+		
+	current_assistant_level += 1
+	
+	if current_assistant_level == 1:
+		print("User has been silent for 20 seconds, switching to stall_1 assistant")
+		vapi_assistant_id = vapi_assistant_id_stall_1
+	elif current_assistant_level == 2:
+		print("User has been silent for another 20 seconds, switching to stall_2 assistant")
+		vapi_assistant_id = vapi_assistant_id_stall_2
+	
+	# Stop current call
+	stop_vapi_recording()
+	
+	# Wait a moment then start with new assistant
+	await get_tree().create_timer(1.0).timeout
+	
+	# Start new call with next assistant
+	start_vapi_recording()
+	
+	# Reset timer for potential future switches
+	user_silence_timer = 0.0

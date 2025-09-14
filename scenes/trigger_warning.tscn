@@ -19,8 +19,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/normal_font_size = 30
-text = "[TRIGGER WARNING]
-This is meant to be a [HORROR] game
-Expect the worst"
+text = "Nabeel Ahmad
+This is a proof of concept"
 horizontal_alignment = 1
 vertical_alignment = 1
