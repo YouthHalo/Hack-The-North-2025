@@ -63,12 +63,17 @@ var last_transcript_bit: String = ""  # Store the last transcript piece for repl
 var vapi_assistant_id_stall_1 := "5fe51e48-9286-47bb-aa24-dfaa8c1d62a7"
 var vapi_assistant_id_stall_2 := "2716c2b3-905c-477e-9191-ea7b274e9079"
 var vapi_assistant_id_progress := "d122f599-9549-448c-8c1a-9800c281d589"
+var vapi_assistant_id_eerie := "9d7dcd32-446c-406d-950f-604d842f1c21"
+var vapi_assistant_id_fin := "4d3f0409-63ff-4116-8330-185692f23196"
 var user_silence_timer: float = 0.0
 var user_silence_threshold: float = 15.0
 var silence_timer_last_print: float = 0.0  # Track last time we printed silence timer
 var has_switched_assistant: bool = false
 var has_switched_to_progress: bool = false  # Track if we've switched to progress assistant
+var has_switched_to_eerie: bool = false  # Track if we've switched to eerie assistant
+var has_switched_to_fin: bool = false  # Track if we've switched to fin assistant
 var current_assistant_level: int = 0  # 0 = first, 1 = stall_1, 2 = stall_2
+var movement_disabled: bool = false  # Disable movement when near car after uh oh
 
 # Audio feedback
 var phone_ringing_player: AudioStreamPlayer
@@ -142,6 +147,19 @@ func _physics_process(delta: float) -> void:
 	handle_subtitle_timer(delta)
 	handle_user_silence_timer(delta)
 	check_car_in_view()  # Check if car comes into view after graves are hidden
+	
+	# If movement is disabled, skip all input handling
+	if movement_disabled:
+		# Still apply gravity
+		if not is_on_floor():
+			velocity += get_gravity() * delta
+		
+		# Stop horizontal movement gradually
+		velocity.x = move_toward(velocity.x, 0, WALK_SPEED)
+		velocity.z = move_toward(velocity.z, 0, WALK_SPEED)
+		
+		move_and_slide()
+		return
 	
 	# Get the input direction
 	var input_dir := Input.get_vector("left", "right", "forward", "backward")
@@ -679,6 +697,11 @@ func add_user_message(text: String):
 	if hint_label:
 		hint_label.text = text
 		print("Added user message: ", text)
+	
+	# Reset silence timer when user speaks
+	user_silence_timer = 0.0
+	silence_timer_last_print = 0.0
+	print("User spoke - silence timer reset")
 
 func clear_subtitles():
 	"""Clear all subtitle text"""
@@ -693,38 +716,26 @@ func clear_subtitles():
 	print("Cleared subtitles")
 
 func handle_user_silence_timer(delta: float):
-	"""Handle switching assistant based on hint text presence"""
+	"""Handle switching assistant based on different logic for stall vs progress"""
 	# Apply timer for first assistant (level 0) and stall_1 (level 1)
-	# But NOT if we've already switched to progress assistant
-	if is_vapi_recording and intro_message_complete and current_assistant_level < 2 and not has_switched_to_progress:
+	# But NOT if we've already switched to progress or eerie assistant
+	if is_vapi_recording and intro_message_complete and current_assistant_level < 2 and not has_switched_to_progress and not has_switched_to_eerie:
 		
-		# Check if user is "silent" based on hint text
-		var hint_text = hint_label.text.strip_edges()  # Remove whitespace
-		var user_silent = (hint_text == "")  # Silent if no hint text showing
+		# For STALL assistants: use simple timer (no text-based logic)
+		user_silence_timer += delta
 		
-		# Debug: print hint text state occasionally
-		if randf() < 0.01:  # 1% chance per frame
-			print("Hint text debug: '", hint_text, "' (length: ", hint_text.length(), ") - User silent: ", user_silent)
-		
-		if user_silent:
-			user_silence_timer += delta
+		# Only print silence timer every 0.1 seconds
+		if user_silence_timer - silence_timer_last_print >= 0.1:
+			print("Silence timer: ", user_silence_timer, " / ", user_silence_threshold, " (Assistant level: ", current_assistant_level, ")")
+			silence_timer_last_print = user_silence_timer
 			
-			# Only print silence timer every 0.1 seconds
-			if user_silence_timer - silence_timer_last_print >= 0.1:
-				print("Silence timer: ", user_silence_timer, " / ", user_silence_threshold, " (Assistant level: ", current_assistant_level, ")")
-				silence_timer_last_print = user_silence_timer
-				
-			if user_silence_timer >= user_silence_threshold:
-				switch_to_next_assistant()
-		else:
-			# Reset timer if hint text is showing (user not considered silent)
-			user_silence_timer = 0.0
-			silence_timer_last_print = 0.0
+		if user_silence_timer >= user_silence_threshold:
+			switch_to_next_assistant()
 
 func switch_to_next_assistant():
 	"""Switch to the next assistant after user silence"""
-	if current_assistant_level >= 2:
-		return  # Already at max level
+	if current_assistant_level >= 2 or has_switched_to_eerie:
+		return  # Already at max level or eerie is active
 		
 	current_assistant_level += 1
 	
@@ -750,25 +761,26 @@ func switch_to_next_assistant():
 
 func switch_to_progress_assistant():
 	"""Switch to progress assistant when graffiti is cleaned"""
-	if has_switched_to_progress:
-		return  # Already switched
+	if has_switched_to_progress or has_switched_to_eerie:
+		return  # Already switched or eerie is active
 	
 	has_switched_to_progress = true
 	print("Graffiti cleaned! Waiting for conversation to pause before switching to progress assistant")
 	
-	# Wait for conversation to pause (AI stopped talking and user is silent)
+	# Wait for conversation to pause (only check text, not timer)
 	while true:
-		# Check if subtitles are empty (AI not talking) and user has been silent for a bit
-		var subtitles_empty = subtitle_label.text == ""
-		var user_silent = user_silence_timer > 1.0  # User has been silent for at least 1 second
+		# Check if both subtitles and hint are empty (no text anywhere)
+		var subtitles_empty = subtitle_label.text.strip_edges() == ""
+		var hint_empty = hint_label.text.strip_edges() == ""
+		var no_text_showing = subtitles_empty and hint_empty
 		
-		if subtitles_empty and user_silent:
+		if no_text_showing:
 			break
 		
 		await get_tree().create_timer(0.1).timeout
-		print("Waiting for conversation pause... (Subtitles empty: ", subtitles_empty, ", User silent: ", user_silent, ")")
+		print("Waiting for text to clear... (Subtitles empty: ", subtitles_empty, ", Hint empty: ", hint_empty, ")")
 	
-	print("Conversation paused, now switching to progress assistant")
+	print("All text cleared, now switching to progress assistant")
 	
 	# Switch to progress assistant
 	vapi_assistant_id = vapi_assistant_id_progress
@@ -781,6 +793,91 @@ func switch_to_progress_assistant():
 	
 	# Start new call with progress assistant
 	start_vapi_recording()
+
+
+func switch_to_eerie_assistant():
+	"""Switch to eerie assistant 0.5 seconds after car detection"""
+	if has_switched_to_eerie:
+		return  # Already switched
+	
+	has_switched_to_eerie = true
+	print("Car detected! Switching to eerie assistant in 0.5 seconds...")
+	
+	# Wait 0.5 seconds then switch
+	#await get_tree().create_timer(0.5).timeout
+	
+	print("Switching to eerie assistant")
+	
+	# Switch to eerie assistant
+	vapi_assistant_id = vapi_assistant_id_eerie
+	
+	# Stop current call
+	stop_vapi_recording()
+	
+	# Wait a moment then start with eerie assistant
+	await get_tree().create_timer(1.0).timeout
+	
+	# Start new call with eerie assistant
+	start_vapi_recording()
+
+func switch_to_fin_assistant():
+	"""Switch to fin assistant immediately when player gets within 5 meters of car"""
+	if has_switched_to_fin:
+		return  # Already switched
+	
+	has_switched_to_fin = true
+	movement_disabled = true  # Disable movement immediately
+	print("Player near car! Switching to fin assistant IMMEDIATELY and disabling movement")
+	
+	# Switch to fin assistant
+	vapi_assistant_id = vapi_assistant_id_fin
+	
+	# Stop current call
+	stop_vapi_recording()
+	
+	# Start new call immediately with fin assistant
+	start_vapi_recording()
+	
+	# After 0.3 seconds of fin speaking, end all calls and play unavailable phone sound
+	await get_tree().create_timer(1.4).timeout
+	end_calls_and_play_unavailable_phone()
+	await get_tree().create_timer(0.5).timeout  # Small delay after sound
+	# Gradually decrease 3D resolution (viewport scaling) to create a "low-res" effect
+	var viewport = get_viewport()
+	var start_scale = 1.0
+	var end_scale = 0.01  # Really low resolution (20% of original)
+	var duration = 2.0   # Duration in seconds for the effect
+	var elapsed = 0.0
+
+	while elapsed < duration:
+		var t = elapsed / duration
+		var scale = lerp(start_scale, end_scale, t)
+		viewport.scaling_3d_scale = scale
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+
+	viewport.scaling_3d_scale = end_scale
+	print("3D resolution decreased to very low")
+
+func end_calls_and_play_unavailable_phone():
+	"""End all VAPI calls and play unavailable phone sound"""
+	print("Ending all calls and playing unavailable phone sound")
+	
+	# Stop VAPI recording
+	stop_vapi_recording()
+	
+	# Clear all text
+	clear_subtitles()
+	
+	# Play unavailable phone sound
+	if spray_audio_player:  # Reuse spray audio player for phone sound
+		var unavailable_sound = load("res://assets/unavailable-phone.mp3")
+		if unavailable_sound:
+			spray_audio_player.stream = unavailable_sound
+			spray_audio_player.play()
+			print("Playing unavailable phone sound")
+		else:
+			print("Warning: Could not load unavailable-phone.mp3")
 
 
 # -----------------------
@@ -845,7 +942,7 @@ func handle_graffiti_spray():
 			print("Graffiti cleaned! Total cleaned: ", graffiti_counter)
 			
 			# Switch to progress assistant when first graffiti is cleaned
-			if graffiti_counter >= 1 and not has_switched_to_progress:
+			if graffiti_counter >= 1 and not has_switched_to_progress and not has_switched_to_eerie:
 				switch_to_progress_assistant()
 			
 			# Hide graves when 6 graffiti are cleaned
@@ -872,13 +969,35 @@ func hide_graves():
 		print("Warning: Could not find /root/Main/Graves node")
 
 
+func unhide_graffiti():
+	"""Unhide all graffiti objects when car is detected"""
+	# Find all nodes in the "graffiti" group and make them visible again
+	var graffiti_nodes = get_tree().get_nodes_in_group("graffiti")
+	var unhidden_count = 0
+	
+	for graffiti in graffiti_nodes:
+		if graffiti and not graffiti.visible:
+			graffiti.visible = true
+			# Also make parent visible if it exists
+			if graffiti.get_parent():
+				graffiti.get_parent().visible = true
+			unhidden_count += 1
+	
+	if unhidden_count > 0:
+		print("Unhidden ", unhidden_count, " graffiti objects when car was detected!")
+	else:
+		print("No hidden graffiti found to unhide")
+
+
 func check_car_in_view():
 	"""Check if car is in view without raycast - detects even corner visibility"""
 	if not graves_hidden:
 		return  # Only check after graves are hidden
 	
 	if car_detected_after_graves:
-		return  # Already detected, stop checking
+		# After "uh oh" moment, check proximity for final sequence
+		check_car_proximity()
+		return  # Already detected initial view, only check proximity now
 	
 	# Try to find the car node
 	var car = get_node_or_null("/root/Main/car")
@@ -905,7 +1024,36 @@ func check_car_in_view():
 		if violin_audio_player and violin_audio_player.stream:
 			violin_audio_player.play()
 			print("Playing violin sound for car detection")
+		
+		# Unhide graffiti when car is detected
+		unhide_graffiti()
+		
+		# Switch to eerie assistant after 0.5 seconds
+		switch_to_eerie_assistant()
 	else:
 		# Only print debug occasionally to avoid spam
 		if randf() < 0.01:  # 1% chance per frame
 			print("Car not in view - Dot product: ", dot_product, " (need > 0.5)")
+
+func check_car_proximity():
+	"""Check if player is within 5 meters of car after uh oh moment"""
+	if has_switched_to_fin:
+		return  # Already switched to fin assistant
+	
+	# Try to find the car node
+	var car = get_node_or_null("/root/Main/car")
+	if not car:
+		print("Warning: Could not find /root/Main/car node for proximity check")
+		return
+	
+	var car_position = car.global_position
+	var player_position = global_position
+	var distance = car_position.distance_to(player_position)
+	
+	if distance <= 5.0:
+		print("Player within 5 meters of car! Distance: ", distance)
+		switch_to_fin_assistant()
+	else:
+		# Only print debug occasionally to avoid spam
+		if randf() < 0.01:  # 1% chance per frame
+			print("Distance to car: ", distance, " meters (need ≤ 5.0)")
