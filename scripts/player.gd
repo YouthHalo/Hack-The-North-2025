@@ -62,9 +62,12 @@ var last_transcript_bit: String = ""  # Store the last transcript piece for repl
 # Assistant switching system
 var vapi_assistant_id_stall_1 := "5fe51e48-9286-47bb-aa24-dfaa8c1d62a7"
 var vapi_assistant_id_stall_2 := "2716c2b3-905c-477e-9191-ea7b274e9079"
+var vapi_assistant_id_progress := "d122f599-9549-448c-8c1a-9800c281d589"
 var user_silence_timer: float = 0.0
 var user_silence_threshold: float = 15.0
+var silence_timer_last_print: float = 0.0  # Track last time we printed silence timer
 var has_switched_assistant: bool = false
+var has_switched_to_progress: bool = false  # Track if we've switched to progress assistant
 var current_assistant_level: int = 0  # 0 = first, 1 = stall_1, 2 = stall_2
 
 # Audio feedback
@@ -75,6 +78,14 @@ var is_t_button_disabled: bool = false
 # Audio capture for real-time streaming
 var audio_capture_bus_index: int
 var audio_input: AudioEffectCapture
+
+# Graffiti cleaning system
+@onready var spray_raycast: RayCast3D = $Camera3D/RayCast3D
+var spray_audio_player: AudioStreamPlayer
+var violin_audio_player: AudioStreamPlayer
+var graffiti_counter: int = 0
+var graves_hidden: bool = false
+var car_detected_after_graves: bool = false
 
 
 func _ready():
@@ -87,6 +98,9 @@ func _ready():
 	
 	# Initialize VAPI components
 	setup_vapi_components()
+	
+	# Initialize spray audio
+	setup_spray_audio()
 	
 	# Set phone always on (show open state)
 	set_phone_always_on()
@@ -116,12 +130,18 @@ func _input(event):
 	elif event is InputEventKey and event.pressed and event.keycode == KEY_T:
 		if not is_t_button_disabled:
 			toggle_vapi_recording()
+	
+	# Handle mouse clicks for graffiti cleaning
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
+			handle_graffiti_spray()
 
 
 func _physics_process(delta: float) -> void:
 	handle_vapi_updates()
 	handle_subtitle_timer(delta)
 	handle_user_silence_timer(delta)
+	check_car_in_view()  # Check if car comes into view after graves are hidden
 	
 	# Get the input direction
 	var input_dir := Input.get_vector("left", "right", "forward", "backward")
@@ -494,8 +514,7 @@ func handle_control_message(json_text: String):
 					print("Assistant said: ", message["assistant"]["text"])
 			"conversation-update":
 				print("Conversation update received")
-				# Reset silence timer on conversation updates
-				user_silence_timer = 0.0
+				# Don't reset silence timer on conversation updates - they happen even when user isn't speaking
 			"speech-update":
 				if message.has("status"):
 					print("Speech status: ", message["status"])
@@ -660,9 +679,6 @@ func add_user_message(text: String):
 	if hint_label:
 		hint_label.text = text
 		print("Added user message: ", text)
-	
-	# Reset user silence timer when user speaks
-	user_silence_timer = 0.0
 
 func clear_subtitles():
 	"""Clear all subtitle text"""
@@ -677,13 +693,33 @@ func clear_subtitles():
 	print("Cleared subtitles")
 
 func handle_user_silence_timer(delta: float):
-	"""Handle switching assistant after user silence"""
+	"""Handle switching assistant based on hint text presence"""
 	# Apply timer for first assistant (level 0) and stall_1 (level 1)
-	if is_vapi_recording and intro_message_complete and current_assistant_level < 2:
-		user_silence_timer += delta
-		print("Silence timer: ", user_silence_timer, " / ", user_silence_threshold, " (Assistant level: ", current_assistant_level, ")")
-		if user_silence_timer >= user_silence_threshold:
-			switch_to_next_assistant()
+	# But NOT if we've already switched to progress assistant
+	if is_vapi_recording and intro_message_complete and current_assistant_level < 2 and not has_switched_to_progress:
+		
+		# Check if user is "silent" based on hint text
+		var hint_text = hint_label.text.strip_edges()  # Remove whitespace
+		var user_silent = (hint_text == "")  # Silent if no hint text showing
+		
+		# Debug: print hint text state occasionally
+		if randf() < 0.01:  # 1% chance per frame
+			print("Hint text debug: '", hint_text, "' (length: ", hint_text.length(), ") - User silent: ", user_silent)
+		
+		if user_silent:
+			user_silence_timer += delta
+			
+			# Only print silence timer every 0.1 seconds
+			if user_silence_timer - silence_timer_last_print >= 0.1:
+				print("Silence timer: ", user_silence_timer, " / ", user_silence_threshold, " (Assistant level: ", current_assistant_level, ")")
+				silence_timer_last_print = user_silence_timer
+				
+			if user_silence_timer >= user_silence_threshold:
+				switch_to_next_assistant()
+		else:
+			# Reset timer if hint text is showing (user not considered silent)
+			user_silence_timer = 0.0
+			silence_timer_last_print = 0.0
 
 func switch_to_next_assistant():
 	"""Switch to the next assistant after user silence"""
@@ -710,3 +746,166 @@ func switch_to_next_assistant():
 	
 	# Reset timer for potential future switches
 	user_silence_timer = 0.0
+
+
+func switch_to_progress_assistant():
+	"""Switch to progress assistant when graffiti is cleaned"""
+	if has_switched_to_progress:
+		return  # Already switched
+	
+	has_switched_to_progress = true
+	print("Graffiti cleaned! Waiting for conversation to pause before switching to progress assistant")
+	
+	# Wait for conversation to pause (AI stopped talking and user is silent)
+	while true:
+		# Check if subtitles are empty (AI not talking) and user has been silent for a bit
+		var subtitles_empty = subtitle_label.text == ""
+		var user_silent = user_silence_timer > 1.0  # User has been silent for at least 1 second
+		
+		if subtitles_empty and user_silent:
+			break
+		
+		await get_tree().create_timer(0.1).timeout
+		print("Waiting for conversation pause... (Subtitles empty: ", subtitles_empty, ", User silent: ", user_silent, ")")
+	
+	print("Conversation paused, now switching to progress assistant")
+	
+	# Switch to progress assistant
+	vapi_assistant_id = vapi_assistant_id_progress
+	
+	# Stop current call
+	stop_vapi_recording()
+	
+	# Wait a moment then start with progress assistant
+	await get_tree().create_timer(1.0).timeout
+	
+	# Start new call with progress assistant
+	start_vapi_recording()
+
+
+# -----------------------
+# Graffiti Cleaning System
+# -----------------------
+func setup_spray_audio():
+	"""Setup spray audio player for graffiti cleaning"""
+	spray_audio_player = AudioStreamPlayer.new()
+	add_child(spray_audio_player)
+	var spray_audio = load("res://assets/spray.mp3")
+	if spray_audio:
+		spray_audio_player.stream = spray_audio
+	spray_audio_player.volume_db = -9.0
+	print("Spray audio initialized")
+	
+	# Setup violin audio player for car detection
+	violin_audio_player = AudioStreamPlayer.new()
+	add_child(violin_audio_player)
+	var violin_audio = load("res://assets/violin.mp3")
+	if violin_audio:
+		violin_audio_player.stream = violin_audio
+	violin_audio_player.volume_db = -9.0
+	print("Violin audio initialized")
+
+
+func handle_graffiti_spray():
+	"""Handle mouse click for graffiti cleaning"""
+	# Play spray sound
+	if spray_audio_player and spray_audio_player.stream:
+		spray_audio_player.play()
+	
+	# Check if raycast is hitting anything
+	if spray_raycast and spray_raycast.is_colliding():
+		var collider = spray_raycast.get_collider()
+		var collision_point = spray_raycast.get_collision_point()
+		var collision_normal = spray_raycast.get_collision_normal()
+		
+		print("Raycast hit: ", collider.name if collider else "null")
+		print("  - Type: ", collider.get_class() if collider else "unknown")
+		print("  - Parent: ", collider.get_parent().name if collider and collider.get_parent() else "no parent")
+		print("  - Position: ", collision_point)
+		print("  - Normal: ", collision_normal)
+		print("  - Groups: ", collider.get_groups() if collider else [])
+		
+		if collider and collider.is_in_group("graffiti"):
+			# Immediately hide the graffiti
+			collider.visible = false
+			
+			# Also try to hide parent if collider is a collision shape
+			if collider.get_parent():
+				collider.get_parent().visible = false
+			
+			# Disable collision to prevent further hits
+			if collider.has_method("set_disabled"):
+				collider.set_disabled(true)
+			
+			# Remove the graffiti scene
+			collider.queue_free()
+			
+			# Increment counter
+			graffiti_counter += 1
+			print("Graffiti cleaned! Total cleaned: ", graffiti_counter)
+			
+			# Switch to progress assistant when first graffiti is cleaned
+			if graffiti_counter >= 1 and not has_switched_to_progress:
+				switch_to_progress_assistant()
+			
+			# Hide graves when 6 graffiti are cleaned
+			if graffiti_counter == 6 and not graves_hidden:
+				hide_graves()
+	else:
+		print("Raycast not colliding with anything")
+
+
+func get_graffiti_counter() -> int:
+	"""Get the current graffiti counter value"""
+	return graffiti_counter
+
+
+func hide_graves():
+	"""Hide the graves when 6 graffiti are cleaned"""
+	var graves = get_node_or_null("/root/Main/Graves")
+	if graves:
+		graves.visible = false
+		graves_hidden = true
+		print("Graves hidden after cleaning 6 graffiti!")
+		print("Car detection is now active!")
+	else:
+		print("Warning: Could not find /root/Main/Graves node")
+
+
+func check_car_in_view():
+	"""Check if car is in view without raycast - detects even corner visibility"""
+	if not graves_hidden:
+		return  # Only check after graves are hidden
+	
+	if car_detected_after_graves:
+		return  # Already detected, stop checking
+	
+	# Try to find the car node
+	var car = get_node_or_null("/root/Main/car")
+	if not car:
+		print("Warning: Could not find /root/Main/car node")
+		return
+	
+	var car_position = car.global_position
+	var camera_position = camera.global_position
+	var direction_to_car = (car_position - camera_position).normalized()
+	
+	# Check if car is in the camera's view direction
+	var camera_forward = -camera.global_transform.basis.z
+	var dot_product = camera_forward.dot(direction_to_car)
+	
+	# Car is in view when dot product is above threshold (smaller FOV)
+	# 0.5 means roughly 60-degree cone (30 degrees to each side)
+	if dot_product > 0.5:
+		print("Car detected in camera view! Dot product: ", dot_product)
+		car_detected_after_graves = true
+		print("uh oh")
+		
+		# Play violin sound
+		if violin_audio_player and violin_audio_player.stream:
+			violin_audio_player.play()
+			print("Playing violin sound for car detection")
+	else:
+		# Only print debug occasionally to avoid spam
+		if randf() < 0.01:  # 1% chance per frame
+			print("Car not in view - Dot product: ", dot_product, " (need > 0.5)")

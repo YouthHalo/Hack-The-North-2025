@@ -1,7 +1,8 @@
-[gd_scene load_steps=14 format=3 uid="uid://it6stqjvxf85"]
+[gd_scene load_steps=15 format=3 uid="uid://it6stqjvxf85"]
 
 [ext_resource type="PackedScene" uid="uid://b2w2qc40qa3xt" path="res://assets/church.glb" id="1_0wfyh"]
 [ext_resource type="PackedScene" uid="uid://bkcwetp2msewl" path="res://scenes/player.tscn" id="1_o5qli"]
+[ext_resource type="PackedScene" uid="uid://cvjyedlufsg8e" path="res://scenes/grafitti.tscn" id="2_tipki"]
 [ext_resource type="Texture2D" uid="uid://do8gj6flbndst" path="res://assets/grass 17 - 128x128.png" id="3_sugp2"]
 [ext_resource type="PackedScene" uid="uid://bnwbntgann5qu" path="res://assets/low_poly_ps1_tombstone.glb" id="4_tbgi4"]
 [ext_resource type="PackedScene" uid="uid://b0dfqar7eyklg" path="res://assets/psx_low-poly_car_-_renault.glb" id="5_tefeu"]
@@ -9,7 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://n7mp571yptuu" path="res://assets/psx_road.glb" id="6_tefeu"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_0wfyh"]
-size = Vector3(5.63831, 1.45215, 3.67633)
+size = Vector3(5.50178, 1.45215, 3.67633)
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_o5qli"]
 sky_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
@@ -37,13 +38,31 @@ albedo_color = Color(0.180392, 0.301961, 0, 1)
 
 [node name="Main" type="Node3D"]
 
+[node name="Grafitti" parent="." instance=ExtResource("2_tipki")]
+transform = Transform3D(3, 0, -4.26326e-14, 0, 3, 0, 4.26326e-14, 0, 3, -6.86524, 4.38671, -27.7255)
+
+[node name="Grafitti2" parent="." instance=ExtResource("2_tipki")]
+transform = Transform3D(1.94412, -2.28482, -2.76276e-14, 2.28482, 1.94412, -3.24692e-14, 4.26326e-14, 0, 3, -7.86524, 1.38671, -27.7255)
+
+[node name="Grafitti3" parent="." instance=ExtResource("2_tipki")]
+transform = Transform3D(1.94412, -2.28482, -2.76276e-14, 2.28482, 1.94412, -3.24692e-14, 4.26326e-14, 0, 3, 7.43348, 1.38671, -27.7255)
+
+[node name="Grafitti4" parent="." instance=ExtResource("2_tipki")]
+transform = Transform3D(-0.0954882, 2.99848, 1.35697e-15, -2.99848, -0.0954882, 4.2611e-14, 4.26326e-14, 0, 3, 7.43348, 4.36449, -27.7255)
+
+[node name="Grafitti5" parent="." instance=ExtResource("2_tipki")]
+transform = Transform3D(-0.0954882, 2.99848, 1.35697e-15, -2.99848, -0.0954882, 4.2611e-14, 4.26326e-14, 0, 3, 6.44888, 4.36449, -27.7255)
+
+[node name="Grafitti6" parent="." instance=ExtResource("2_tipki")]
+transform = Transform3D(-0.0954882, 2.99848, 1.35697e-15, -2.99848, -0.0954882, 4.2611e-14, 4.26326e-14, 0, 3, 9.19154, 3.09962, -27.7255)
+
 [node name="Church" parent="." instance=ExtResource("1_0wfyh")]
 transform = Transform3D(-4.37114e-07, 0, -10, 0, 10, 0, 10, 0, -4.37114e-07, 0, 10, -37.7676)
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Church"]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Church/StaticBody3D"]
-transform = Transform3D(1, 0, -3.55271e-15, 0, 1, 0, 3.55271e-15, 0, 1, -1.68952, -0.269149, 0.0432794)
+transform = Transform3D(1, 0, -3.55271e-15, 0, 1, 0, 3.55271e-15, 0, 1, -1.75779, -0.269149, 0.0432794)
 shape = SubResource("BoxShape3D_0wfyh")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
@@ -65,20 +84,50 @@ use_collision = true
 size = Vector3(457.9, 0.2, 429.088)
 material = SubResource("StandardMaterial3D_o5qli")
 
-[node name="Sketchfab_Scene" parent="." instance=ExtResource("4_tbgi4")]
+[node name="Graves" parent="." instance=ExtResource("4_tbgi4")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4754, 0.102526, -13.1472)
 
-[node name="Sketchfab_Scene2" parent="." instance=ExtResource("4_tbgi4")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.64865, 0.102526, -13.6437)
+[node name="Graves2" parent="Graves" instance=ExtResource("4_tbgi4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.05523, 0, 0)
 
-[node name="Sketchfab_Scene3" parent="." instance=ExtResource("4_tbgi4")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.36523, 0.102526, -13.1693)
+[node name="Graves3" parent="Graves" instance=ExtResource("4_tbgi4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.05523, 0, 4)
 
-[node name="Sketchfab_Scene4" parent="." instance=ExtResource("4_tbgi4")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.4341, 0.102526, -10.1249)
+[node name="Graves4" parent="Graves" instance=ExtResource("4_tbgi4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.05523, 0, 4)
 
-[node name="Sketchfab_Scene5" parent="." instance=ExtResource("4_tbgi4")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.03268, 0.102525, -10.5339)
+[node name="Graves5" parent="Graves" instance=ExtResource("4_tbgi4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.05523, 0, 4)
+
+[node name="Graves6" parent="Graves" instance=ExtResource("4_tbgi4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.05523, 0, 4)
+
+[node name="Graves7" parent="Graves" instance=ExtResource("4_tbgi4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.94477, 0, 4)
+
+[node name="Graves12" parent="Graves" instance=ExtResource("4_tbgi4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.94477, 0, 8)
+
+[node name="Graves13" parent="Graves" instance=ExtResource("4_tbgi4")]
+transform = Transform3D(0.965926, 0, -0.258819, 0, 1, 0, 0.258819, 0, 0.965926, -5.94477, 0, 8)
+
+[node name="Graves14" parent="Graves" instance=ExtResource("4_tbgi4")]
+transform = Transform3D(0.965926, 0, -0.258819, 0, 1, 0, 0.258819, 0, 0.965926, -5.94477, 0, 10)
+
+[node name="Graves15" parent="Graves" instance=ExtResource("4_tbgi4")]
+transform = Transform3D(0.875241, 0.12683, -0.466762, -0.107158, 0.991874, 0.0685792, 0.471667, -0.010006, 0.88172, -2.94477, 0, 10)
+
+[node name="Graves8" parent="Graves" instance=ExtResource("4_tbgi4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.94477, 0, 4)
+
+[node name="Graves9" parent="Graves" instance=ExtResource("4_tbgi4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.94477, 0, 4)
+
+[node name="Graves10" parent="Graves" instance=ExtResource("4_tbgi4")]
+transform = Transform3D(0.984808, 0, -0.173648, 0, 1, 0, 0.173648, 0, 0.984808, -3.94477, 0, 2)
+
+[node name="Graves11" parent="Graves" instance=ExtResource("4_tbgi4")]
+transform = Transform3D(0.984808, 0, -0.173648, 0, 1, 0, 0.173648, 0, 0.984808, -3.94477, 0, 2)
 
 [node name="car" parent="." instance=ExtResource("5_tefeu")]
 transform = Transform3D(-0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, -0.866025, 2.33584, 0.0999994, 34.7984)
@@ -96,7 +145,7 @@ spot_attenuation = 3.0
 spot_angle = 28.9569
 
 [node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="car"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.22853, 1.18426, 1.62603)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25232, 1.13395, 1.63992)
 stream = ExtResource("6_o6xl0")
 autoplay = true
 max_distance = 20.0
