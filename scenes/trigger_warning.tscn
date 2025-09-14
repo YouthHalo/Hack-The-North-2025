@@ -1,0 +1,26 @@
+[gd_scene load_steps=2 format=3 uid="uid://gopfw3nmaga1"]
+
+[ext_resource type="Script" uid="uid://5omq3j0o8tt1" path="res://scripts/trigger_warning.gd" id="1_jw7mn"]
+
+[node name="TriggerWarning" type="ColorRect"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0962047, 0.0962048, 0.0962047, 1)
+script = ExtResource("1_jw7mn")
+
+[node name="RichTextLabel" type="RichTextLabel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/normal_font_size = 30
+text = "[TRIGGER WARNING]
+This is meant to be a [HORROR] game
+Expect the worst"
+horizontal_alignment = 1
+vertical_alignment = 1
