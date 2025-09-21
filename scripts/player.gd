@@ -32,7 +32,7 @@ var mix_rate := 44100
 var format := AudioStreamWAV.FORMAT_16_BITS
 
 # Vapi configuration - replace with your actual values
-var vapi_api_key := "6bc49d0f-26d9-45b0-8686-f16d12d76cac"
+var vapi_api_key := "API KEY HERE"
 var vapi_assistant_id := "f3cf5bf5-335f-44a6-b9dd-3c9b09eb0c0b"
 var http_request: HTTPRequest
 var websocket: WebSocketPeer
